@@ -65,10 +65,15 @@ struct OnboardingView: View {
                         .gesture(
                             DragGesture()
                                 .onChanged { gesture in
-                                    imageOffset = gesture.translation
-                        
+                                    if abs(imageOffset.width) <= 150{
+                                        imageOffset = gesture.translation
+                                    }
+                                }
+                                .onEnded{ _ in
+                                    imageOffset = .zero
                                 }
                             ) //: GESTURE
+                        .animation(.easeOut(duration: 1), value: imageOffset)
                 } //: CENTRE
                 
                 Spacer()
