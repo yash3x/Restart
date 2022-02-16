@@ -16,11 +16,10 @@ struct OnboardingView: View {
     @State private var buttonOffset: CGFloat = 0
     @State private var isAnimating: Bool = false
     @State private var imageOffset: CGSize = .zero
+    @State private var indicatorOpacity: Double = 1.0
+    @State private var textTitle: String = "Share. "
     
-    
-    
-    
-    
+    let haptickFeedback = UINotificationFeedbackGenerator()
     
     //MARK: - BODY
     
@@ -33,10 +32,12 @@ struct OnboardingView: View {
                 Spacer()
                 
                 VStack(spacing: 0){
-                    Text("Share.")
+                    Text(textTitle)
                         .font(.system(size: 60))
                         .fontWeight(.heavy)
                         .foregroundColor(.white)
+                        .transition(.opacity)
+                        .id(textTitle)
                     
                     Text("""
                     It's not much we give but
@@ -72,14 +73,32 @@ struct OnboardingView: View {
                                 .onChanged { gesture in
                                     if abs(imageOffset.width) <= 150{
                                         imageOffset = gesture.translation
+                                        withAnimation(.linear(duration: 0.25)){
+                                            indicatorOpacity = 0
+                                            textTitle = "Give."
+                                        }
                                     }
                                 }
                                 .onEnded{ _ in
                                     imageOffset = .zero
+                                    withAnimation(.linear(duration: 0.25)){
+                                        indicatorOpacity = 1
+                                        textTitle = "Share."
+                                    }
                                 }
                             ) //: GESTURE
                         .animation(.easeOut(duration: 1), value: imageOffset)
                 } //: CENTRE
+                .overlay(
+                    Image(systemName: "arrow.left.and.right.circle")
+                        .font(.system(size: 44, weight: .ultraLight))
+                        .foregroundColor(.white)
+                        .offset(y: 20)
+                        .opacity(isAnimating ? 1: 0)
+                        .animation(.easeOut(duration: 1).delay(2), value: isAnimating)
+                        .opacity(indicatorOpacity)
+                    , alignment: .bottom
+                )
                 
                 Spacer()
                 
@@ -141,9 +160,12 @@ struct OnboardingView: View {
                         .onEnded{ _ in
                             withAnimation(Animation.easeOut(duration: 0.4)){
                                 if buttonOffset > buttonWidth / 2 {
+                                    haptickFeedback.notificationOccurred(.success)
+                                    playSound(sound: "chimeup", type: "mp3")
                                     buttonOffset = buttonWidth - 80
                                     isOnboardingViewActive = false
                                 } else {
+                                    haptickFeedback.notificationOccurred(.warning)
                                     buttonOffset = 0
                                 }
                             }
@@ -162,6 +184,7 @@ struct OnboardingView: View {
         .onAppear(perform: {
             isAnimating = true
         })
+        .preferredColorScheme(.dark)
     }
 }
 
